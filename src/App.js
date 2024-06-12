@@ -19,7 +19,7 @@ const App = () =>{
       const cleanedTask = task.trim()
       if (cleanedTask === "")
       {
-        alert("Task can't be empty");
+        alert("Task cannot be empty");
         updateTask("");
         return
       }
