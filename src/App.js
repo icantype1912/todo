@@ -96,7 +96,7 @@ const Edit = (props) => {
             onChange={(e) => handleChange(e)}
           ></input>
         )}
-        <button disabled={du}>{editBox ? "Update" : "Edit"}</button>
+        <button style={du?{cursor:"not-allowed"}:{}} disabled={du}>{editBox ? "Update" : "Edit"}</button>
       </form>
       {editBox && <button onClick={onCancel}>cancel</button>}
     </>
