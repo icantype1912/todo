@@ -70,6 +70,7 @@ const App = () =>{
         autoAnimate(parentRef.current);
       }
   },[parentRef]);
+  
   const click = () =>
     {
       console.log("TDL",TDL)
