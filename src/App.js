@@ -2,12 +2,68 @@ import React from "react";
 import { useState,useEffect,useRef } from "react";
 import "./App.css"
 import autoAnimate from '@formkit/auto-animate'
+import { initializeApp } from "firebase/app";
+import { getFirestore,collection,addDoc,getDocs,orderBy,query,doc,deleteDoc, updateDoc } from "firebase/firestore";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnhd64a6PTGX7CvYg2EETlhjE-cVomREs",
+  authDomain: "to-do-app-a9f75.firebaseapp.com",
+  projectId: "to-do-app-a9f75",
+  storageBucket: "to-do-app-a9f75.appspot.com",
+  messagingSenderId: "964935491444",
+  appId: "1:964935491444:web:4ac0fe326802af978c5621",
+  measurementId: "G-875YMP988Q"
+}
+const app = initializeApp(firebaseConfig)
+const db = getFirestore(app);
+//const colRef = collection(db,"taskitems")
+
 
 const App = () =>{
+  const currentDate = new Date()
   const [TDL,updateTDL] = useState([])
   const [task,updateTask] = useState("")
   const [count,updateCount] = useState(0)
   const parentRef = useRef();
+  const [loading,setLoading] = useState(false)
+
+  const getTodoItems = async () => {
+    let tasks = []
+    try{
+      const q = query(collection(db,"taskitems"),orderBy("time"))
+    const snapshot = await getDocs(q);
+    snapshot.docs.forEach((doc)=>{
+      tasks.push({...doc.data(),id:doc.id})
+    })
+    updateTDL(tasks)
+  } 
+   catch(err){
+     console.log(err.message)
+   }
+  }
+  
+  useEffect(()=>{
+    setLoading(true)
+    getTodoItems()
+    setLoading(false)
+  },[count])
+
+
+  
+  const addUserToFirestore = async ()=>{
+      try{
+        setLoading(true)
+        const docRef = await addDoc(collection(db,"taskitems"),{
+          time:currentDate.getTime(),
+          task:task,
+        })
+        console.log(docRef.id)
+        setLoading(false)
+      }catch(e){
+        console.error("Error")
+      }
+    }
   useEffect(()=>{
     if(parentRef.current)
       {
@@ -16,6 +72,7 @@ const App = () =>{
   },[parentRef]);
   const click = () =>
     {
+      console.log("TDL",TDL)
       const cleanedTask = task.trim()
       if (cleanedTask === "")
       {
@@ -25,24 +82,35 @@ const App = () =>{
       }
       updateTask(cleanedTask)
       updateCount(prev => prev + 1)
-      updateTDL(prev => [...prev,{count : count,value : task}])
       updateTask("");
+      addUserToFirestore()
     }
-  const del = (k) =>
+  const del = async (k) =>{
+    try{
+      setLoading(true)
+      await deleteDoc(doc(db, "taskitems", k));
+      updateCount(prev=>prev+1)
+      setLoading(false)
+    }
+    catch(err)
     {
-      const list = TDL.filter(item => item.count !== k)
-      updateTDL(list)
+      console.error("deletion error ",err)
     }
-
-    const update = (newtask) =>
+  }
+    const update = async (newtask) =>
       {
-        const list = TDL.map(item => {
-          if(item.count===newtask.count){
-            return newtask
-          }
-          return item
-        })
-      updateTDL(list)
+        try{
+          setLoading(true)
+          await updateDoc(doc(db,"taskitems",newtask.count),{
+            task:newtask.value
+          })
+          updateCount(prev=>prev+1)
+          setLoading(false)
+        }
+        catch(e)
+        {
+          console.log("There is an error",e)
+        }
       }
     const handlingSubmit = (e) =>
       {
@@ -54,16 +122,16 @@ const App = () =>{
     <h1 className= "top">TO-DO</h1>
     <p className="top-subtext">So you don't forget anything :{")"}</p>
     <form className="container" onSubmit={(e)=>handlingSubmit(e)}>
-      <input value = {task} type = "text" onChange={(e) => updateTask(e.target.value)}  className="addTask"></input>
-      <button className="add">+</button>
+      <input value = {task} type = "text" onChange={(e) => updateTask(e.target.value)}  className="addTask" disabled={loading}></input>
+      {!loading?<button className="add">+</button>:<div className="loader"></div>}
     </form>
     <ul ref={parentRef}>
     {TDL.map((x) => {
       return  <div className="parent">
-          <h2 className="listitem">-{"> "}{x.value}</h2>
+          <h2 className="listitem">-{"> "}{x.task}</h2>
           <div className="deletedit">
             <Edit task={x} updateNewTask={update} />
-            <button  onClick={()=>del(x.count)}>🗑️</button>
+            <button  onClick={()=>del(x.id)}>🗑️</button>
           </div>
         </div>
     }) }
@@ -86,7 +154,7 @@ const Edit = (props)=>
                 alert("More than one charectar please!")
                 return
               }
-            updateNewTask({count: task.count,value : inputVal})
+            updateNewTask({count: task.id,value : inputVal})
           }
           return newVal
         })
