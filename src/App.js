@@ -20,6 +20,78 @@ const db = getFirestore(app);
 //const colRef = collection(db,"taskitems")
 
 
+const Edit = (props)=>
+  {
+    const {task,updateNewTask,editing,setEditing} = props
+    const [inputVal, setInputVal] = useState(task.task)
+    const [editBox,updateEditBox] = useState(false);
+    const [du,setDu] = useState(false)
+
+    const onCancel = () =>
+      {
+        updateEditBox(false)
+        setDu(false)
+      }
+    const onEdit = () =>
+      {
+        setEditing(task.id)
+        setDu(true)
+        setInputVal(task.task)
+        updateEditBox((prev)=>{
+          const newVal = !prev
+          if(!newVal){
+            if(inputVal.trim() === "")
+              {
+                alert("More than one charectar please!")
+                setDu(false)
+                return
+              }
+            updateNewTask({count: task.id,value : inputVal})
+            setDu(false)
+          }
+          return newVal
+        })
+      }
+      const submitHandle = (e) => {
+        e.preventDefault()
+        onEdit()
+      }
+
+      const handleChange = (e)=>{
+        const val = e.target.value
+        setInputVal(val)
+        if(val === task.task)
+          {
+            setDu(true)
+            console.log(true)
+          }
+        else
+        {
+          setDu(false)
+          console.log(false)
+        }
+      }
+      useEffect(()=>{
+        if(editing === task.id)
+          {
+            updateEditBox(true)
+            setDu(false)
+          }
+        else
+        {
+          updateEditBox(false)
+          setDu(false)
+        }
+      },[editing,task.id])
+    return<>
+      <form onSubmit={submitHandle} className="form">
+        {editBox && <input className = "edittextbox" type = "text" value={inputVal} onChange={(e)=>handleChange(e) }></input>}
+        <button disabled={du}>{editBox?'Update':'Edit'}</button>
+      </form>
+      {editBox && <button onClick={onCancel}>cancel</button>}
+    </>
+}
+
 const App = () =>{
   const currentDate = new Date()
   const [TDL,updateTDL] = useState([])
@@ -27,8 +99,10 @@ const App = () =>{
   const [count,updateCount] = useState(0)
   const parentRef = useRef();
   const [loading,setLoading] = useState(false)
+  const [editing,setEditing] = useState(null)
 
   const getTodoItems = async () => {
+    setLoading(true)
     let tasks = []
     try{
       const q = query(collection(db,"taskitems"),orderBy("time"))
@@ -41,12 +115,13 @@ const App = () =>{
    catch(err){
      console.log(err.message)
    }
+   finally{
+    setLoading(false)
+   }
   }
   
   useEffect(()=>{
-    setLoading(true)
     getTodoItems()
-    setLoading(false)
   },[count])
 
 
@@ -60,6 +135,7 @@ const App = () =>{
         })
         console.log(docRef.id)
         setLoading(false)
+
       }catch(e){
         console.error("Error")
       }
@@ -86,6 +162,7 @@ const App = () =>{
       updateTask("");
       addUserToFirestore()
     }
+
   const del = async (k) =>{
     try{
       setLoading(true)
@@ -102,6 +179,7 @@ const App = () =>{
       {
         try{
           setLoading(true)
+          console.log(newtask.count,newtask.value,'update call')
           await updateDoc(doc(db,"taskitems",newtask.count),{
             task:newtask.value
           })
@@ -118,6 +196,7 @@ const App = () =>{
         e.preventDefault();
         click();
       }
+      
   
   return <div>
     <h1 className= "top">TO-DO</h1>
@@ -131,7 +210,7 @@ const App = () =>{
       return  <div className="parent">
           <h2 className="listitem">-{"> "}{x.task}</h2>
           <div className="deletedit">
-            <Edit task={x} updateNewTask={update} />
+            <Edit task={x} updateNewTask={update} editing = {editing} setEditing = {setEditing}/>
             <button  onClick={()=>del(x.id)}>🗑️</button>
           </div>
         </div>
@@ -140,36 +219,6 @@ const App = () =>{
   </div>
 }
 
-const Edit = (props)=>
-  {
-    const {task,updateNewTask} = props
-    const [inputVal, setInputVal] = useState(task.task)
-    const [editBox,updateEditBox] = useState(false);
-    const onEdit = () =>
-      {
-        updateEditBox((prev)=>{
-          const newVal = !prev
-          if(!newVal){
-            if(inputVal.trim() === "")
-              {
-                alert("More than one charectar please!")
-                return
-              }
-            updateNewTask({count: task.id,value : inputVal})
-          }
-          return newVal
-        })
-      }
-      const submitHandle = (e) => {
-        e.preventDefault()
-        onEdit()
-      }
-    return<>
-      <form onSubmit={submitHandle}>
-        {editBox && <input className = "edittextbox" type = "text" value={inputVal} onChange={(e)=>setInputVal(e.target.value)}></input>}
-        <button>{editBox?'Update':'Edit'}</button>
-      </form>
-    </>
-  }
+
 
 export default App;
