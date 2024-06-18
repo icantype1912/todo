@@ -70,7 +70,7 @@ const App = () =>{
         autoAnimate(parentRef.current);
       }
   },[parentRef]);
-  
+
   const click = () =>
     {
       console.log("TDL",TDL)
@@ -143,7 +143,7 @@ const App = () =>{
 const Edit = (props)=>
   {
     const {task,updateNewTask} = props
-    const [inputVal, setInputVal] = useState(task.value)
+    const [inputVal, setInputVal] = useState(task.task)
     const [editBox,updateEditBox] = useState(false);
     const onEdit = () =>
       {
