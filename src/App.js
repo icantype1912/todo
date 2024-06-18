@@ -34,11 +34,6 @@ const Edit = (props)=>
       }
     const onEdit = () =>
       {
-        if(task.id === editing)
-          {
-            setDu(false)
-            return
-          }
         setEditing(task.id)
         setInputVal(task.task)
         updateEditBox((prev)=>{
