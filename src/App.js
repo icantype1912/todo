@@ -34,8 +34,12 @@ const Edit = (props)=>
       }
     const onEdit = () =>
       {
+        if(task.id === editing)
+          {
+            setDu(false)
+            return
+          }
         setEditing(task.id)
-        setDu(true)
         setInputVal(task.task)
         updateEditBox((prev)=>{
           const newVal = !prev
@@ -54,6 +58,7 @@ const Edit = (props)=>
       }
       const submitHandle = (e) => {
         e.preventDefault()
+        setDu(true)
         onEdit()
       }
 
@@ -63,12 +68,10 @@ const Edit = (props)=>
         if(val === task.task)
           {
             setDu(true)
-            console.log(true)
           }
         else
         {
           setDu(false)
-          console.log(false)
         }
       }
       useEffect(()=>{
